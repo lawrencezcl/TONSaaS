@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User & Authentication
+model User {
+  id                   String      @id @default(cuid())
+  tonAddress           String      @unique @map("ton_address")
+  email                String?     @unique
+  subscriptionTier     String      @default("free") @map("subscription_tier")
+  subscriptionEndDate  DateTime?   @map("subscription_end_date")
+  stripeCustomerId     String?     @unique @map("stripe_customer_id")
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
+  
+  channels             Channel[]
+  subscriptions        Subscription[]
+  
+  @@map("users")
+}
+
+// Telegram Channels
+model Channel {
+  id                 String      @id @default(cuid())
+  userId             String      @map("user_id")
+  telegramChannelId  String      @unique @map("telegram_channel_id")
+  channelName        String      @map("channel_name")
+  channelUsername    String?     @map("channel_username")
+  subscriberCount    Int         @default(0) @map("subscriber_count")
+  niche              String?
+  isActive           Boolean     @default(true) @map("is_active")
+  lastSyncAt         DateTime?   @map("last_sync_at")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analytics          ChannelAnalytics[]
+  posts              PostAnalytics[]
+  recommendations    AIRecommendation[]
+  
+  @@index([userId])
+  @@index([telegramChannelId])
+  @@map("channels")
+}
+
+// Daily Analytics Aggregation
+model ChannelAnalytics {
+  id                  String      @id @default(cuid())
+  channelId           String      @map("channel_id")
+  date                DateTime    @map("date")
+  subscriberCount     Int         @map("subscriber_count")
+  newSubscribers      Int         @default(0) @map("new_subscribers")
+  postsCount          Int         @default(0) @map("posts_count")
+  totalViews          Int         @default(0) @map("total_views")
+  totalReactions      Int         @default(0) @map("total_reactions")
+  engagementRate      Float       @default(0) @map("engagement_rate")
+  estimatedAdRevenue  Float       @default(0) @map("estimated_ad_revenue")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  
+  channel             Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  @@unique([channelId, date])
+  @@index([channelId, date])
+  @@map("channel_analytics")
+}
+
+// Post-Level Analytics
+model PostAnalytics {
+  id                 String      @id @default(cuid())
+  channelId          String      @map("channel_id")
+  telegramMessageId  String      @map("telegram_message_id")
+  postDate           DateTime    @map("post_date")
+  contentType        String      @map("content_type")
+  postLength         Int         @default(0) @map("post_length")
+  hasMedia           Boolean     @default(false) @map("has_media")
+  views              Int         @default(0)
+  reactions          Int         @default(0)
+  shares             Int         @default(0)
+  forwards           Int         @default(0)
+  engagementRate     Float       @default(0) @map("engagement_rate")
+  hashtags           String      @default("")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  
+  channel            Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  @@unique([channelId, telegramMessageId])
+  @@index([channelId, postDate])
+  @@map("post_analytics")
+}
+
+// AI Recommendations
+model AIRecommendation {
+  id                       String      @id @default(cuid())
+  channelId                String      @map("channel_id")
+  recommendationType       String      @map("recommendation_type")
+  title                    String
+  description              String
+  confidenceScore          Float       @map("confidence_score")
+  expectedImpactPercentage Int         @map("expected_impact_percentage")
+  isActive                 Boolean     @default(true) @map("is_active")
+  isDismissed              Boolean     @default(false) @map("is_dismissed")
+  createdAt                DateTime    @default(now()) @map("created_at")
+  
+  channel                  Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  @@index([channelId, createdAt])
+  @@map("ai_recommendations")
+}
+
+// Subscriptions & Billing
+model Subscription {
+  id              String      @id @default(cuid())
+  userId          String      @map("user_id")
+  plan            String
+  monthlyPrice    Float       @map("monthly_price")
+  status          String      @default("active")
+  tonTxHash       String?     @unique @map("ton_tx_hash")
+  stripeSubId     String?     @unique @map("stripe_subscription_id")
+  currentPeriodStart DateTime @map("current_period_start")
+  currentPeriodEnd   DateTime @map("current_period_end")
+  cancelAtPeriodEnd  Boolean  @default(false) @map("cancel_at_period_end")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("subscriptions")
+}
