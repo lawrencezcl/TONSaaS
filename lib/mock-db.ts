@@ -65,10 +65,27 @@ function generateId(): string {
   return `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Initialize with seed data
+function initializeSeedData() {
+  if (mockData.users.size === 0) {
+    // Create default test user
+    const testUser: User = {
+      id: 'test_user_123',
+      tonAddress: 'EQrsftc1wmTKnfIr-CG6xbC35Ih5KZkPEOoV3-3NMG5VDg8H',
+      subscriptionTier: 'free',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mockData.users.set(testUser.id, testUser);
+    console.log(' Initialized mock database with test user');
+  }
+}
+
 // Mock Prisma client interface
 export const mockPrisma = {
   user: {
     findUnique: async ({ where, include }: any) => {
+      initializeSeedData();
       let user: User | undefined;
       if (where.tonAddress) {
         user = Array.from(mockData.users.values()).find(
