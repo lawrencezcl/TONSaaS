@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { TonConnectUIProvider } from '@tonconnect/ui-react';
+import { TonConnectProvider } from './providers/TonConnectProvider';
 import "./globals.css";
 
 const inter = Inter({
@@ -19,16 +19,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const manifestUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/tonconnect-manifest.json`
-    : 'https://channelgrowth-saas.vercel.app/tonconnect-manifest.json';
-
   return (
     <html lang="en">
       <body className={inter.variable}>
-        <TonConnectUIProvider manifestUrl={manifestUrl}>
+        <TonConnectProvider>
           {children}
-        </TonConnectUIProvider>
+        </TonConnectProvider>
       </body>
     </html>
   );
