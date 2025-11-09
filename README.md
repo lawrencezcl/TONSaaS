@@ -37,6 +37,15 @@ An AI-powered SaaS platform that helps Telegram channel owners grow their revenu
 
 ## 🔧 Installation
 
+**⚠️ Database Required for Production**: This app requires a PostgreSQL database to function properly. The current deployment uses an in-memory mock database for demonstration purposes, which has limitations in serverless environments. To enable full functionality:
+
+1. Set up Vercel Postgres (recommended) or another PostgreSQL database
+2. Add `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` environment variables in Vercel
+3. Run `npx prisma db push` to create the schema
+4. Redeploy the application
+
+### Local Development
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/YOUR_USERNAME/TONSaaS.git
