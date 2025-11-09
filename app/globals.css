@@ -61,10 +61,9 @@
 
 @layer base {
   * {
-    border-color: theme('colors.border');
+    @apply border-border;
   }
   body {
-    background-color: theme('colors.background');
-    color: theme('colors.foreground');
+    @apply bg-background text-foreground;
   }
 }
