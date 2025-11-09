@@ -4,6 +4,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Deployment](https://img.shields.io/badge/deployed-Vercel-black)
+
+🔗 **Live Demo**: [https://channelgrowth-saas-lawrencezcls-projects.vercel.app](https://channelgrowth-saas-lawrencezcls-projects.vercel.app)
 
 An AI-powered SaaS platform that helps Telegram channel owners grow their revenue by 30% through intelligent analytics and recommendations.
 
