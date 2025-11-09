@@ -91,7 +91,18 @@ export const mockPrisma = {
         user = Array.from(mockData.users.values()).find(
           (u) => u.tonAddress === where.tonAddress
         );
-      } else {
+        // Auto-create user if not found (for demo purposes)
+        if (!user) {
+          user = {
+            id: generateId(),
+            tonAddress: where.tonAddress,
+            subscriptionTier: 'free',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          mockData.users.set(user.id, user);
+        }
+      } else if (where.id) {
         user = mockData.users.get(where.id);
       }
       
