@@ -56,6 +56,7 @@ const mockData = {
   users: new Map<string, User>(),
   channels: new Map<string, Channel>(),
   analytics: new Map<string, ChannelAnalytics>(),
+  posts: new Map<string, any>(),
   recommendations: new Map<string, AIRecommendation>(),
 };
 
@@ -67,13 +68,27 @@ function generateId(): string {
 // Mock Prisma client interface
 export const mockPrisma = {
   user: {
-    findUnique: async ({ where }: any) => {
+    findUnique: async ({ where, include }: any) => {
+      let user: User | undefined;
       if (where.tonAddress) {
-        return Array.from(mockData.users.values()).find(
+        user = Array.from(mockData.users.values()).find(
           (u) => u.tonAddress === where.tonAddress
-        ) || null;
+        );
+      } else {
+        user = mockData.users.get(where.id);
       }
-      return mockData.users.get(where.id) || null;
+      
+      if (!user) return null;
+      
+      // Handle include relations
+      if (include?.channels) {
+        const channels = Array.from(mockData.channels.values()).filter(
+          (c) => c.userId === user!.id
+        );
+        return { ...user, channels };
+      }
+      
+      return user;
     },
     create: async ({ data }: any) => {
       const user: User = {
@@ -154,6 +169,49 @@ export const mockPrisma = {
       }
       
       return { _sum: sum, _avg: avg };
+    },
+    upsert: async ({ where, update, create }: any) => {
+      // Find existing record
+      const existing = Array.from(mockData.analytics.values()).find(
+        (a) => a.channelId === where.channelId_date.channelId && 
+               a.date.toDateString() === where.channelId_date.date.toDateString()
+      );
+      
+      if (existing) {
+        Object.assign(existing, update);
+        return existing;
+      } else {
+        const analytics: ChannelAnalytics = {
+          id: generateId(),
+          ...create,
+        };
+        mockData.analytics.set(analytics.id, analytics);
+        return analytics;
+      }
+    },
+  },
+  postAnalytics: {
+    upsert: async ({ where, update, create }: any) => {
+      // Find existing record
+      const existing = Array.from(mockData.posts || []).find(
+        (p: any) => 
+          p.channelId === where.channelId_telegramMessageId.channelId && 
+          p.telegramMessageId === where.channelId_telegramMessageId.telegramMessageId
+      );
+      
+      if (existing) {
+        Object.assign(existing, update);
+        return existing;
+      } else {
+        const post = {
+          id: generateId(),
+          ...create,
+          createdAt: new Date(),
+        };
+        if (!mockData.posts) mockData.posts = new Map();
+        mockData.posts.set(post.id, post);
+        return post;
+      }
     },
   },
   aIRecommendation: {
