@@ -6,13 +6,10 @@ export class ChannelService {
    * Add channel to user account
    */
   async addChannel(userId: string, telegramChannelId: string) {
-    // 1. Validate subscription limits
-    await this.validateChannelLimit(userId);
-
-    // 2. Fetch channel info from Telegram
+    // 1. Fetch channel info from Telegram
     const channelInfo = await telegramService.getChannelInfo(telegramChannelId);
 
-    // 3. Verify user is admin of the channel
+    // 2. Verify user is admin of the channel
     const isAdmin = await telegramService.verifyUserIsAdmin(
       telegramChannelId,
       userId
@@ -21,7 +18,7 @@ export class ChannelService {
       throw new Error('You must be an admin of this channel');
     }
 
-    // 4. Create channel in database
+    // 3. Create channel in database
     const channel = await prisma.channel.create({
       data: {
         userId,
@@ -33,37 +30,10 @@ export class ChannelService {
       },
     });
 
-    // 5. Trigger initial sync
+    // 4. Trigger initial sync
     await this.syncChannel(channel.id);
 
     return channel;
-  }
-
-  /**
-   * Validate user hasn't exceeded channel limit
-   */
-  private async validateChannelLimit(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { channels: true },
-    });
-
-    if (!user) throw new Error('User not found');
-
-    const limits = {
-      free: 1,
-      pro: 5,
-      business: 20,
-      enterprise: 9999,
-    };
-
-    const maxChannels = limits[user.subscriptionTier as keyof typeof limits];
-
-    if (user.channels.length >= maxChannels) {
-      throw new Error(
-        `Channel limit reached. Upgrade to add more channels.`
-      );
-    }
   }
 
   /**
